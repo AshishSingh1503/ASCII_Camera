@@ -100,13 +100,23 @@ async function startCamera() {
             audio: false,
         });
         cameraFeed.srcObject = stream;
+        
+        // Wait for the video to be loadable
+        await new Promise((resolve) => {
+            cameraFeed.onloadedmetadata = () => {
+                resolve();
+            };
+        });
+        
         await cameraFeed.play();
         state.cameraOn = true;
         cameraToggle.checked = true;
         updatePreviewMirror();
         updateStatus("💻 Camera live");
+        console.log("Camera started. Video readyState:", cameraFeed.readyState);
         renderLoop();
     } catch (error) {
+        console.error("Camera error:", error);
         state.cameraOn = false;
         cameraToggle.checked = false;
         cameraCtx.fillStyle = "#1a1a2e";
@@ -115,7 +125,7 @@ async function startCamera() {
         cameraCtx.font = "16px sans-serif";
         cameraCtx.textAlign = "center";
         cameraCtx.fillText("Camera access denied", cameraCanvas.width / 2, cameraCanvas.height / 2);
-        updateStatus("❌ Camera access failed");
+        updateStatus("❌ Camera access failed: " + error.message);
     }
 }
 
@@ -202,6 +212,23 @@ function grayscaleToImageData(grayscale, width, height) {
     }
     
     return imageData;
+}
+
+// Resample grayscale data from one resolution to another using nearest neighbor
+function resampleGrayscale(grayscale, srcWidth, srcHeight, dstWidth, dstHeight) {
+    const output = new Uint8ClampedArray(dstWidth * dstHeight);
+    const scaleX = srcWidth / dstWidth;
+    const scaleY = srcHeight / dstHeight;
+    
+    for (let y = 0; y < dstHeight; y++) {
+        for (let x = 0; x < dstWidth; x++) {
+            const srcX = Math.floor(x * scaleX);
+            const srcY = Math.floor(y * scaleY);
+            output[y * dstWidth + x] = grayscale[srcY * srcWidth + srcX];
+        }
+    }
+    
+    return output;
 }
 
 // UNIT 1: SAMPLING & QUANTIZATION
@@ -491,30 +518,54 @@ function renderFrame() {
         return;
     }
 
-    const width = state.detail;
-    const height = Math.max(32, Math.floor(width * 0.56));
-    resizeCanvases(width, height);
+    // Use full camera resolution for rendering
+    const renderWidth = 640;
+    const renderHeight = 480;
+    resizeCanvases(renderWidth, renderHeight);
 
-    // Draw camera feed on camera canvas
-    context.save();
-    if (state.mirror) {
-        context.translate(width, 0);
-        context.scale(-1, 1);
+    // Detail level controls processing resolution (60-200)
+    // Convert detail to a sampling scale (0.1 to 0.33)
+    const detailScale = state.detail / 640;
+    const processingWidth = Math.max(60, Math.floor(renderWidth * detailScale));
+    const processingHeight = Math.max(32, Math.floor(renderHeight * detailScale));
+
+    // Draw camera feed on processing canvas
+    try {
+        context.save();
+        if (state.mirror) {
+            context.translate(renderWidth, 0);
+            context.scale(-1, 1);
+        }
+        context.drawImage(cameraFeed, 0, 0, renderWidth, renderHeight);
+        context.restore();
+
+        // Get original image data at full resolution
+        let imageData = context.getImageData(0, 0, renderWidth, renderHeight);
+        let grayscale = convertToGrayscale(imageData.data, renderWidth, renderHeight);
+
+        // Display camera feed on canvas
+        const cameraImageData = grayscaleToImageData(grayscale, renderWidth, renderHeight);
+        cameraCtx.putImageData(cameraImageData, 0, 0);
+
+    // UNIT 1: Apply Sampling based on detail level
+    // First, downsample to processing resolution
+    let workingGrayscale = new Uint8ClampedArray(processingWidth * processingHeight);
+    for (let y = 0; y < processingHeight; y++) {
+        for (let x = 0; x < processingWidth; x++) {
+            const srcX = Math.floor((x / processingWidth) * renderWidth);
+            const srcY = Math.floor((y / processingHeight) * renderHeight);
+            workingGrayscale[y * processingWidth + x] = grayscale[srcY * renderWidth + srcX];
+        }
     }
-    context.drawImage(cameraFeed, 0, 0, width, height);
-    context.restore();
-
-    // Get original image data
-    let imageData = context.getImageData(0, 0, width, height);
-    let grayscale = convertToGrayscale(imageData.data, width, height);
-
-    // Display camera feed on canvas
-    const cameraImageData = grayscaleToImageData(grayscale, width, height);
-    cameraCtx.putImageData(cameraImageData, 0, 0);
-
-    // UNIT 1: Apply Sampling
-    const sampledResult = applySampling(grayscale, width, height);
-    grayscale = sampledResult.data;
+    
+    // Apply sampling scale if set
+    const sampledResult = applySampling(workingGrayscale, processingWidth, processingHeight);
+    workingGrayscale = sampledResult.data;
+    let width = sampledResult.width;
+    let height = sampledResult.height;
+    
+    // Now work with the processed data at reduced resolution
+    grayscale = workingGrayscale;
 
     // Apply Quantization
     grayscale = quantizeImage(grayscale, state.quantizeLevels);
@@ -568,8 +619,11 @@ function renderFrame() {
         grayscale[i] = mapValue(grayscale[i]);
     }
 
-    // Display processed image
-    const processedImageData = grayscaleToImageData(grayscale, width, height);
+    // Resize back to full dimensions for display
+    const fullOutputData = resampleGrayscale(grayscale, width, height, renderWidth, renderHeight);
+    
+    // Display processed image at full resolution
+    const processedImageData = grayscaleToImageData(fullOutputData, renderWidth, renderHeight);
     outputCtx.putImageData(processedImageData, 0, 0);
 
     animationHandle = requestAnimationFrame(renderFrame);

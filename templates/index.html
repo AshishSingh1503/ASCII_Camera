@@ -18,7 +18,7 @@
             </div>
             <div class="hero-status">
                 <span class="status-dot"></span>
-                <span id="statusText">Waiting for camera access</span>
+                <span id="statusText">Connecting to camera...</span>
             </div>
         </header>
 
@@ -376,15 +376,15 @@
                     <div class="image-display-container">
                         <div class="image-column">
                             <h4>Live Camera Feed</h4>
-                            <canvas id="cameraCanvas" class="display-canvas"></canvas>
+                            <canvas id="cameraCanvas" class="display-canvas" width="640" height="480"></canvas>
                         </div>
                         <div class="image-column">
                             <h4>Processed Output</h4>
-                            <canvas id="outputCanvas" class="display-canvas"></canvas>
+                            <canvas id="outputCanvas" class="display-canvas" width="640" height="480"></canvas>
                         </div>
                     </div>
                     <video id="cameraFeed" class="camera-preview" autoplay playsinline muted style="display:none;"></video>
-                    <canvas id="processingCanvas" hidden></canvas>
+                    <canvas id="processingCanvas" width="640" height="480" hidden></canvas>
                 </div>
             </section>
         </main>
