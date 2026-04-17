@@ -10,10 +10,10 @@
     <div class="page-shell">
         <header class="hero">
             <div>
-                <p class="eyebrow">Image Processing Suite</p>
-                <h1>ASCII Cam Studio</h1>
+                <p class="eyebrow">Professional Image Processing</p>
+                <h1>Image Studio</h1>
                 <p class="hero-copy">
-                    Learn image processing through interactive ASCII visualization. Five units covering sampling, enhancement, restoration, compression, and segmentation.
+                    Real-time image processing with live grayscale visualization. Learn image processing through five comprehensive modules with interactive controls.
                 </p>
             </div>
             <div class="hero-status">
@@ -47,13 +47,6 @@
                         <span>Mirror view</span>
                         <label class="switch">
                             <input id="mirrorToggle" type="checkbox" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div class="switch-row">
-                        <span>Dense characters</span>
-                        <label class="switch">
-                            <input id="denseToggle" type="checkbox">
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -94,8 +87,8 @@
             <!-- Main content area with tabs -->
             <section class="panel viewer-panel">
                 <div class="panel-heading">
-                    <h2>Image Processing Modules</h2>
-                    <p>Select a unit to explore different image processing techniques.</p>
+                    <h2>Grayscale Image Processing Studio</h2>
+                    <p>Real-time image processing with live grayscale visualization. Select a unit to explore techniques.</p>
                 </div>
 
                 <!-- Tab Navigation -->
@@ -378,10 +371,19 @@
                     </div>
                 </div>
 
-                <!-- ASCII Output -->
+                <!-- Image Output -->
                 <div class="viewer-stack" style="margin-top: 20px;">
-                    <pre id="asciiFrame" class="ascii-screen glow-on">Enable camera to begin.</pre>
-                    <video id="cameraFeed" class="camera-preview" autoplay playsinline muted></video>
+                    <div class="image-display-container">
+                        <div class="image-column">
+                            <h4>Live Camera Feed</h4>
+                            <canvas id="cameraCanvas" class="display-canvas"></canvas>
+                        </div>
+                        <div class="image-column">
+                            <h4>Processed Output</h4>
+                            <canvas id="outputCanvas" class="display-canvas"></canvas>
+                        </div>
+                    </div>
+                    <video id="cameraFeed" class="camera-preview" autoplay playsinline muted style="display:none;"></video>
                     <canvas id="processingCanvas" hidden></canvas>
                 </div>
             </section>
