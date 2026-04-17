@@ -88,7 +88,9 @@ console.log("✅ App initialized - DOM elements loaded");
 // ============================================================
 
 function updateStatus(message) {
-    statusText.textContent = message;
+    if (statusText) {
+        statusText.textContent = message;
+    }
 }
 
 function resizeCanvases(width, height) {
@@ -234,6 +236,24 @@ function stopCamera() {
 
 function updatePreviewMirror() {
     cameraFeed.style.transform = state.mirror ? "scaleX(-1)" : "none";
+    cameraFeed.classList.toggle("no-mirror", !state.mirror);
+}
+
+function updateVisualEffects() {
+    document.body.classList.toggle("glow-disabled", !state.glow);
+}
+
+function updateTabHeader(button) {
+    const title = document.getElementById("activeTabTitle");
+    const summary = document.getElementById("activeTabSummary");
+
+    if (title) {
+        title.textContent = button?.dataset.title || "Image Processing";
+    }
+
+    if (summary) {
+        summary.textContent = button?.dataset.summary || "Explore the selected unit with live controls.";
+    }
 }
 
 // ============================================================
@@ -245,20 +265,43 @@ function initTabs() {
     const tabPanes = document.querySelectorAll(".tab-pane");
 
     tabButtons.forEach((button) => {
+        const isActive = button.classList.contains("active");
+        button.setAttribute("aria-selected", String(isActive));
+        button.setAttribute("tabindex", isActive ? "0" : "-1");
+
         button.addEventListener("click", () => {
             const tabName = button.dataset.tab;
             state.currentTab = tabName;
 
-            tabButtons.forEach((btn) => btn.classList.remove("active"));
+            tabButtons.forEach((btn) => {
+                btn.classList.remove("active");
+                btn.setAttribute("aria-selected", "false");
+                btn.setAttribute("tabindex", "-1");
+            });
             button.classList.add("active");
+            button.setAttribute("aria-selected", "true");
+            button.setAttribute("tabindex", "0");
 
-            tabPanes.forEach((pane) => pane.classList.remove("active"));
+            tabPanes.forEach((pane) => {
+                pane.classList.remove("active");
+                pane.setAttribute("aria-hidden", "true");
+            });
             document.getElementById(tabName)?.classList.add("active");
+            document.getElementById(tabName)?.setAttribute("aria-hidden", "false");
 
-            // Update progress
+            updateTabHeader(button);
             updateProgress(tabName);
         });
     });
+
+    const activeButton = document.querySelector(".tab-button.active");
+    const activePane = document.querySelector(".tab-pane.active");
+    if (activeButton) {
+        updateTabHeader(activeButton);
+    }
+    if (activePane) {
+        activePane.setAttribute("aria-hidden", "false");
+    }
 }
 
 function updateProgress(currentTab) {
@@ -778,10 +821,12 @@ document.getElementById("helpModal")?.addEventListener("click", (e) => {
 
 mirrorToggle.addEventListener("change", () => {
     state.mirror = mirrorToggle.checked;
+    updatePreviewMirror();
 });
 
 glowToggle.addEventListener("change", () => {
     state.glow = glowToggle.checked;
+    updateVisualEffects();
 });
 
 detailRange.addEventListener("input", () => {
@@ -794,9 +839,11 @@ contrastRange.addEventListener("input", () => {
     contrastValue.textContent = Number(contrastRange.value).toFixed(2);
 });
 
-brightnessRange.addEventListener("input", () => {
+brightnessRange?.addEventListener("input", () => {
     state.brightness = Number(brightnessRange.value);
-    brightnessValue.textContent = brightnessRange.value;
+    if (brightnessValue) {
+        brightnessValue.textContent = brightnessRange.value;
+    }
 });
 
 // UNIT 1: BASICS TAB
@@ -1130,6 +1177,8 @@ function toggleLearningMode(enabled) {
 
 initTabs();
 updateProgress('basics'); // Initialize with first unit
+updateVisualEffects();
+updatePreviewMirror();
 
 window.addEventListener("beforeunload", stopCamera);
 

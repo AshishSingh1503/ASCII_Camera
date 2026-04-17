@@ -9,16 +9,40 @@
 <body>
     <div class="page-shell">
         <header class="hero">
-            <div>
+            <div class="hero-copy-block">
                 <p class="eyebrow">Professional Image Processing</p>
                 <h1>Image Studio</h1>
                 <p class="hero-copy">
                     Real-time image processing with live grayscale visualization. Learn image processing through five comprehensive modules with interactive controls.
                 </p>
+                <div class="hero-highlights">
+                    <div class="highlight-pill">
+                        <span class="highlight-value">5</span>
+                        <span class="highlight-label">learning units</span>
+                    </div>
+                    <div class="highlight-pill">
+                        <span class="highlight-value">Live</span>
+                        <span class="highlight-label">camera pipeline</span>
+                    </div>
+                    <div class="highlight-pill">
+                        <span class="highlight-value">Dual</span>
+                        <span class="highlight-label">canvas compare</span>
+                    </div>
+                </div>
             </div>
-            <div class="hero-status">
-                <span class="status-dot"></span>
-                <span id="statusText">Connecting to camera...</span>
+            <div class="hero-actions">
+                <div class="learning-toggle">
+                    <span>Learning mode</span>
+                    <label class="switch">
+                        <input id="learningToggle" type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <button id="helpBtn" class="ghost-button" type="button">Open Unit Guide</button>
+                <div class="hero-status">
+                    <span class="status-dot"></span>
+                    <span id="statusText">Connecting to camera...</span>
+                </div>
             </div>
         </header>
 
@@ -77,6 +101,14 @@
                 </div>
 
                 <div class="control-group">
+                    <label class="slider-row" for="brightnessRange">
+                        <span>Brightness</span>
+                        <span id="brightnessValue">0</span>
+                    </label>
+                    <input id="brightnessRange" type="range" min="-120" max="120" step="5" value="0">
+                </div>
+
+                <div class="control-group">
                     <span class="group-label">Performance Metrics</span>
                     <div class="metrics-display">
                         <div class="metric-item">
@@ -99,30 +131,50 @@
             <!-- Main content area with tabs -->
             <section class="panel viewer-panel">
                 <div class="panel-heading">
-                    <h2>Grayscale Image Processing Studio</h2>
-                    <p>Real-time image processing with live grayscale visualization. Select a unit to explore techniques.</p>
+                    <div class="section-heading-row">
+                        <div>
+                            <h2>Grayscale Image Processing Studio</h2>
+                            <p>Real-time image processing with live grayscale visualization. Select a unit to explore techniques.</p>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-meta">
+                                <span class="progress-kicker">Course Progress</span>
+                                <span id="progressText" class="progress-text">Unit 1 of 5: Basics</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="progressFill" class="progress-fill" style="width: 20%;"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Tab Navigation -->
                 <div class="tabs-container">
+                    <div class="tab-shell-header">
+                        <div>
+                            <p class="tabs-kicker">Learning Path</p>
+                            <h3 id="activeTabTitle">Sampling & Quantization</h3>
+                        </div>
+                        <p id="activeTabSummary" class="tabs-summary">Build intuition for resolution, gray levels, and neighborhood relationships.</p>
+                    </div>
                     <div class="tab-navigation">
-                        <button class="tab-button active" data-tab="basics" type="button">
+                        <button class="tab-button active" data-tab="basics" data-title="Sampling & Quantization" data-summary="Build intuition for resolution, gray levels, and neighborhood relationships." type="button">
                             <span class="tab-label">Basics</span>
                             <span class="tab-desc">Sampling & Quantization</span>
                         </button>
-                        <button class="tab-button" data-tab="enhancement" type="button">
+                        <button class="tab-button" data-tab="enhancement" data-title="Transformations & Filters" data-summary="Experiment with contrast, gamma, histograms, and spatial filtering techniques." type="button">
                             <span class="tab-label">Enhancement</span>
                             <span class="tab-desc">Transformations & Filters</span>
                         </button>
-                        <button class="tab-button" data-tab="restoration" type="button">
+                        <button class="tab-button" data-tab="restoration" data-title="Noise & Degradation" data-summary="Introduce realistic degradation, then recover image quality with restoration controls." type="button">
                             <span class="tab-label">Restoration</span>
                             <span class="tab-desc">Noise & Degradation</span>
                         </button>
-                        <button class="tab-button" data-tab="compression" type="button">
+                        <button class="tab-button" data-tab="compression" data-title="Encoding & DCT" data-summary="Compare lossless and lossy strategies while exploring compression tradeoffs." type="button">
                             <span class="tab-label">Compression</span>
                             <span class="tab-desc">Encoding & DCT</span>
                         </button>
-                        <button class="tab-button" data-tab="segmentation" type="button">
+                        <button class="tab-button" data-tab="segmentation" data-title="Thresholding & Morphology" data-summary="Segment structure from the scene with thresholding, edges, and morphology." type="button">
                             <span class="tab-label">Segmentation</span>
                             <span class="tab-desc">Thresholding & Morphology</span>
                         </button>
