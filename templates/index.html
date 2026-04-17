@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASCII Cam</title>
+    <title>ASCII Cam - Image Processing Suite</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <div class="page-shell">
         <header class="hero">
             <div>
-                <p class="eyebrow">Live Webcam ASCII</p>
-                <h1>ASCII Cam Web App</h1>
+                <p class="eyebrow">Image Processing Suite</p>
+                <h1>ASCII Cam Studio</h1>
                 <p class="hero-copy">
-                    Turn your camera feed into animated ASCII with a bright green interface and quick effect toggles.
+                    Learn image processing through interactive ASCII visualization. Five units covering sampling, enhancement, restoration, compression, and segmentation.
                 </p>
             </div>
             <div class="hero-status">
@@ -23,10 +23,11 @@
         </header>
 
         <main class="layout">
-            <section class="panel controls-panel">
+            <!-- Sidebar with camera controls -->
+            <section class="panel sidebar-panel">
                 <div class="panel-heading">
-                    <h2>Controls</h2>
-                    <p>Flip modes and tune the look in real time.</p>
+                    <h2>Settings</h2>
+                    <p>Global camera & display options.</p>
                 </div>
 
                 <div class="control-group">
@@ -41,18 +42,7 @@
                 </div>
 
                 <div class="control-group">
-                    <span class="group-label">Modes</span>
-                    <div class="mode-grid" id="modeGrid">
-                        <button class="mode-button active" data-mode="normal" type="button">Normal</button>
-                        <button class="mode-button" data-mode="inverted" type="button">Inverted</button>
-                        <button class="mode-button" data-mode="edges" type="button">Edges</button>
-                        <button class="mode-button" data-mode="sketch" type="button">Sketch</button>
-                        <button class="mode-button" data-mode="matrix" type="button">Matrix</button>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <span class="group-label">Switches</span>
+                    <span class="group-label">Display</span>
                     <div class="switch-row">
                         <span>Mirror view</span>
                         <label class="switch">
@@ -78,10 +68,10 @@
 
                 <div class="control-group">
                     <label class="slider-row" for="detailRange">
-                        <span>Detail</span>
+                        <span>Detail Level</span>
                         <span id="detailValue">120</span>
                     </label>
-                    <input id="detailRange" type="range" min="72" max="180" step="4" value="120">
+                    <input id="detailRange" type="range" min="60" max="200" step="4" value="120">
                 </div>
 
                 <div class="control-group">
@@ -91,15 +81,305 @@
                     </label>
                     <input id="contrastRange" type="range" min="0.6" max="2.4" step="0.05" value="1.35">
                 </div>
+
+                <div class="control-group">
+                    <label class="slider-row" for="brightnessRange">
+                        <span>Brightness</span>
+                        <span id="brightnessValue">0</span>
+                    </label>
+                    <input id="brightnessRange" type="range" min="-50" max="50" step="2" value="0">
+                </div>
             </section>
 
+            <!-- Main content area with tabs -->
             <section class="panel viewer-panel">
                 <div class="panel-heading">
-                    <h2>Output</h2>
-                    <p>Browser camera feed rendered as glowing text.</p>
+                    <h2>Image Processing Modules</h2>
+                    <p>Select a unit to explore different image processing techniques.</p>
                 </div>
 
-                <div class="viewer-stack">
+                <!-- Tab Navigation -->
+                <div class="tabs-container">
+                    <div class="tab-navigation">
+                        <button class="tab-button active" data-tab="basics" type="button">
+                            <span class="tab-label">Basics</span>
+                            <span class="tab-desc">Sampling & Quantization</span>
+                        </button>
+                        <button class="tab-button" data-tab="enhancement" type="button">
+                            <span class="tab-label">Enhancement</span>
+                            <span class="tab-desc">Transformations & Filters</span>
+                        </button>
+                        <button class="tab-button" data-tab="restoration" type="button">
+                            <span class="tab-label">Restoration</span>
+                            <span class="tab-desc">Noise & Degradation</span>
+                        </button>
+                        <button class="tab-button" data-tab="compression" type="button">
+                            <span class="tab-label">Compression</span>
+                            <span class="tab-desc">Encoding & DCT</span>
+                        </button>
+                        <button class="tab-button" data-tab="segmentation" type="button">
+                            <span class="tab-label">Segmentation</span>
+                            <span class="tab-desc">Thresholding & Morphology</span>
+                        </button>
+                    </div>
+
+                    <!-- Tab Contents -->
+                    <div class="tab-content">
+                        <!-- UNIT 1: BASICS -->
+                        <div class="tab-pane active" id="basics">
+                            <div class="controls-section">
+                                <h3>Sampling & Quantization</h3>
+                                
+                                <div class="control-group">
+                                    <span class="group-label">Sampling Control</span>
+                                    <label class="slider-row" for="samplingScale">
+                                        <span>Resolution Scale</span>
+                                        <span id="samplingValue">1.0x</span>
+                                    </label>
+                                    <input id="samplingScale" type="range" min="0.3" max="2.0" step="0.1" value="1.0">
+                                    <p class="help-text">Controls image resolution before ASCII conversion</p>
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">Quantization Levels</span>
+                                    <div class="button-group">
+                                        <button class="preset-button active" data-quantize="4" type="button">4-Level</button>
+                                        <button class="preset-button" data-quantize="8" type="button">8-Level</button>
+                                        <button class="preset-button" data-quantize="16" type="button">16-Level</button>
+                                    </div>
+                                    <p class="help-text">Lower = fewer gray levels, higher = more detail</p>
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">Pixel Relationships</span>
+                                    <div class="button-group">
+                                        <button class="preset-button" id="neighbor4Btn" type="button">4-Neighbors</button>
+                                        <button class="preset-button" id="neighbor8Btn" type="button">8-Neighbors</button>
+                                    </div>
+                                    <p class="help-text">Click a pixel in the output to highlight neighbors</p>
+                                    <div id="pixelInfoDisplay" style="display:none; margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                        <p id="pixelInfo"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- UNIT 2: ENHANCEMENT -->
+                        <div class="tab-pane" id="enhancement">
+                            <div class="controls-section">
+                                <h3>Image Enhancement</h3>
+
+                                <div class="control-group">
+                                    <span class="group-label">Gray Level Transformations</span>
+                                    <div class="button-group">
+                                        <button class="mode-button" data-transform="negative" type="button">Negative</button>
+                                        <button class="mode-button" data-transform="log" type="button">Log Transform</button>
+                                        <button class="mode-button" data-transform="normal" type="button">Normal</button>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <label class="slider-row" for="gammaSlider">
+                                        <span>Gamma Correction (γ)</span>
+                                        <span id="gammaValue">1.0</span>
+                                    </label>
+                                    <input id="gammaSlider" type="range" min="0.2" max="3.0" step="0.1" value="1.0">
+                                    <p class="help-text">s = c·r^γ (lightens if γ < 1, darkens if γ > 1)</p>
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">Histogram Processing</span>
+                                    <div class="switch-row">
+                                        <span>Histogram Equalization</span>
+                                        <label class="switch">
+                                            <input id="histogramToggle" type="checkbox">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div id="histogramDisplay" style="margin-top: 10px;">
+                                        <canvas id="histogramCanvas" width="300" height="80"></canvas>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">Spatial Filtering</span>
+                                    <div class="button-group">
+                                        <button class="filter-button" data-filter="mean" type="button">Mean</button>
+                                        <button class="filter-button" data-filter="gaussian" type="button">Gaussian</button>
+                                        <button class="filter-button" data-filter="laplacian" type="button">Laplacian</button>
+                                        <button class="filter-button" data-filter="sobel" type="button">Sobel</button>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <label class="slider-row" for="filterStrength">
+                                        <span>Filter Strength</span>
+                                        <span id="strengthValue">1</span>
+                                    </label>
+                                    <input id="filterStrength" type="range" min="1" max="5" step="1" value="1">
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">Custom Kernel</span>
+                                    <div id="kernelInput" style="display:none;">
+                                        <textarea id="kernelMatrix" placeholder="Enter 3x3 or 5x5 kernel\nExample: 1 2 1\n          2 4 2\n          1 2 1" rows="5" style="width: 100%;"></textarea>
+                                        <button id="applyKernel" type="button" style="margin-top: 8px; width: 100%;">Apply Custom Kernel</button>
+                                    </div>
+                                    <button id="kernelToggle" type="button" style="width: 100%;">Enable Custom Kernel</button>
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">Frequency Domain (FFT)</span>
+                                    <button id="fftToggle" type="button" style="width: 100%;">Show FFT Magnitude Spectrum</button>
+                                    <p class="help-text">F(u,v) = Σ Σ f(x,y)·e^(-j2π(ux/M+vy/N))</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- UNIT 3: RESTORATION -->
+                        <div class="tab-pane" id="restoration">
+                            <div class="controls-section">
+                                <h3>Image Restoration</h3>
+
+                                <div class="control-group">
+                                    <span class="group-label">Add Noise</span>
+                                    <div class="button-group">
+                                        <button class="noise-button active" data-noise="none" type="button">None</button>
+                                        <button class="noise-button" data-noise="salt_pepper" type="button">Salt & Pepper</button>
+                                        <button class="noise-button" data-noise="gaussian" type="button">Gaussian</button>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <label class="slider-row" for="noiseIntensity">
+                                        <span>Noise Intensity</span>
+                                        <span id="noiseValue">0%</span>
+                                    </label>
+                                    <input id="noiseIntensity" type="range" min="0" max="100" step="5" value="0">
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">Restoration Filters</span>
+                                    <div class="button-group">
+                                        <button class="filter-button" data-restore="median" type="button">Median</button>
+                                        <button class="filter-button" data-restore="bilateral" type="button">Bilateral</button>
+                                        <button class="filter-button" data-restore="none" type="button">None</button>
+                                    </div>
+                                    <p class="help-text">Median filter works well for salt & pepper noise</p>
+                                </div>
+
+                                <div class="control-group">
+                                    <label class="slider-row" for="motionBlur">
+                                        <span>Motion Blur Degradation</span>
+                                        <span id="blurValue">0</span>
+                                    </label>
+                                    <input id="motionBlur" type="range" min="0" max="10" step="1" value="0">
+                                    <p class="help-text">Simulates motion blur effect</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- UNIT 4: COMPRESSION -->
+                        <div class="tab-pane" id="compression">
+                            <div class="controls-section">
+                                <h3>Image Compression</h3>
+
+                                <div class="control-group">
+                                    <span class="group-label">Run Length Encoding (RLE)</span>
+                                    <button id="rleToggle" type="button" style="width: 100%;">Enable RLE Compression</button>
+                                    <div id="rleStats" style="display:none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                        <p id="originalSize">Original Size: -</p>
+                                        <p id="compressedSize">Compressed Size: -</p>
+                                        <p id="compressionRatio">Compression Ratio: -</p>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">DCT (Discrete Cosine Transform)</span>
+                                    <label class="slider-row" for="dctQuality">
+                                        <span>Quality (Compression)</span>
+                                        <span id="qualityValue">100%</span>
+                                    </label>
+                                    <input id="dctQuality" type="range" min="10" max="100" step="10" value="100">
+                                    <p class="help-text">Lower = more compression, higher = better quality (like JPEG)</p>
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">Compression Mode</span>
+                                    <div class="button-group">
+                                        <button class="compression-button active" data-compression="lossless" type="button">Lossless</button>
+                                        <button class="compression-button" data-compression="lossy" type="button">Lossy (DCT)</button>
+                                    </div>
+                                </div>
+
+                                <div id="compressionComparison" style="margin-top: 15px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- UNIT 5: SEGMENTATION -->
+                        <div class="tab-pane" id="segmentation">
+                            <div class="controls-section">
+                                <h3>Image Segmentation & Morphology</h3>
+
+                                <div class="control-group">
+                                    <span class="group-label">Thresholding</span>
+                                    <label class="slider-row" for="thresholdSlider">
+                                        <span>Threshold Value</span>
+                                        <span id="thresholdValue">128</span>
+                                    </label>
+                                    <input id="thresholdSlider" type="range" min="0" max="255" step="5" value="128">
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">Thresholding Method</span>
+                                    <div class="button-group">
+                                        <button class="threshold-button active" data-threshold="manual" type="button">Manual</button>
+                                        <button class="threshold-button" data-threshold="otsu" type="button">Otsu Auto</button>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">Edge Detection</span>
+                                    <div class="button-group">
+                                        <button class="edge-button" data-edge="sobel" type="button">Sobel</button>
+                                        <button class="edge-button" data-edge="prewitt" type="button">Prewitt</button>
+                                        <button class="edge-button" data-edge="laplacian" type="button">Laplacian</button>
+                                        <button class="edge-button" data-edge="none" type="button">None</button>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <label class="slider-row" for="edgeThreshold">
+                                        <span>Edge Threshold</span>
+                                        <span id="edgeThreshValue">50</span>
+                                    </label>
+                                    <input id="edgeThreshold" type="range" min="0" max="255" step="5" value="50">
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="group-label">Morphological Operations</span>
+                                    <div class="button-group" style="grid-template-columns: repeat(2, 1fr);">
+                                        <button class="morph-button" data-morph="erosion" type="button">Erosion</button>
+                                        <button class="morph-button" data-morph="dilation" type="button">Dilation</button>
+                                        <button class="morph-button" data-morph="opening" type="button">Opening</button>
+                                        <button class="morph-button" data-morph="closing" type="button">Closing</button>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <label class="slider-row" for="morphIterations">
+                                        <span>Morphology Iterations</span>
+                                        <span id="morphValue">1</span>
+                                    </label>
+                                    <input id="morphIterations" type="range" min="1" max="5" step="1" value="1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ASCII Output -->
+                <div class="viewer-stack" style="margin-top: 20px;">
                     <pre id="asciiFrame" class="ascii-screen glow-on">Enable camera to begin.</pre>
                     <video id="cameraFeed" class="camera-preview" autoplay playsinline muted></video>
                     <canvas id="processingCanvas" hidden></canvas>
