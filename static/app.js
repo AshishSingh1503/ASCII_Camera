@@ -63,12 +63,25 @@ const contrastValue = document.getElementById("contrastValue");
 const brightnessValue = document.getElementById("brightnessValue");
 const statusText = document.getElementById("statusText");
 
-const context = processingCanvas.getContext("2d", { willReadFrequently: true });
-const cameraCtx = cameraCanvas.getContext("2d", { willReadFrequently: true });
-const outputCtx = outputCanvas.getContext("2d", { willReadFrequently: true });
+// Verify DOM elements exist
+if (!cameraFeed || !cameraCanvas || !outputCanvas || !processingCanvas || !cameraToggle) {
+    console.error("❌ Missing critical DOM elements:", {
+        cameraFeed: !!cameraFeed,
+        cameraCanvas: !!cameraCanvas,
+        outputCanvas: !!outputCanvas,
+        processingCanvas: !!processingCanvas,
+        cameraToggle: !!cameraToggle,
+    });
+}
+
+const context = processingCanvas?.getContext("2d", { willReadFrequently: true });
+const cameraCtx = cameraCanvas?.getContext("2d", { willReadFrequently: true });
+const outputCtx = outputCanvas?.getContext("2d", { willReadFrequently: true });
 
 let stream = null;
 let animationHandle = 0;
+
+console.log("✅ App initialized - DOM elements loaded");
 
 // ============================================================
 // UTILITY FUNCTIONS
@@ -92,40 +105,103 @@ function resizeCanvases(width, height) {
 // ============================================================
 
 async function startCamera() {
-    if (stream) return;
+    console.log("📷 startCamera() called, stream exists:", !!stream);
+    if (stream) {
+        console.log("⚠️ Camera already running");
+        return;
+    }
 
     try {
+        console.log("🔍 Requesting camera access...");
+        console.log("navigator.mediaDevices available:", !!navigator.mediaDevices);
+        console.log("navigator.mediaDevices.getUserMedia available:", !!navigator.mediaDevices?.getUserMedia);
+
+        // Check if running in secure context (HTTPS or localhost)
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            throw new Error("Camera access requires HTTPS or localhost. Please access this app via https:// or localhost.");
+        }
+
+        // Check if getUserMedia is supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error("getUserMedia is not supported in this browser. Please use a modern browser like Chrome, Firefox, or Edge.");
+        }
+
+        // Check current permission status
+        if (navigator.permissions) {
+            try {
+                const permissionStatus = await navigator.permissions.query({ name: 'camera' });
+                console.log("📋 Current camera permission status:", permissionStatus.state);
+                if (permissionStatus.state === 'denied') {
+                    throw new Error("Camera permission was previously denied. Please reset camera permissions in browser settings.");
+                } else if (permissionStatus.state === 'granted') {
+                    console.log("✅ Camera permission already granted");
+                } else {
+                    console.log("❓ Camera permission status: prompt (will show permission dialog)");
+                }
+            } catch (permError) {
+                console.log("⚠️ Could not check permission status:", permError.message);
+                // Permission API might not be available or supported
+            }
+        } else {
+            console.log("⚠️ navigator.permissions not available - cannot check permission status");
+        }
+
+        if (!navigator.mediaDevices?.getUserMedia) {
+            throw new Error("getUserMedia not supported");
+        }
+
+        console.log("⏳ Calling getUserMedia - browser will show permission prompt");
+        console.log("🔍 If no prompt appears, check browser settings or try the reset button");
+
         stream = await navigator.mediaDevices.getUserMedia({
             video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
             audio: false,
         });
+
+        console.log("✅ Permission granted! Setting up stream...");
         cameraFeed.srcObject = stream;
-        
-        // Wait for the video to be loadable
-        await new Promise((resolve) => {
-            cameraFeed.onloadedmetadata = () => {
-                resolve();
-            };
-        });
-        
+
+        // Wait for the video to be loadable with timeout
+        console.log("⏳ Waiting for video metadata...");
+        await Promise.race([
+            new Promise((resolve) => {
+                cameraFeed.onloadedmetadata = () => {
+                    console.log("✅ Video metadata loaded");
+                    resolve();
+                };
+            }),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Video metadata timeout")), 5000)
+            ),
+        ]);
+
+        console.log("▶️ Playing video...");
         await cameraFeed.play();
+
         state.cameraOn = true;
         cameraToggle.checked = true;
         updatePreviewMirror();
         updateStatus("💻 Camera live");
-        console.log("Camera started. Video readyState:", cameraFeed.readyState);
+        console.log("🎬 Camera started successfully. Video readyState:", cameraFeed.readyState);
         renderLoop();
     } catch (error) {
-        console.error("Camera error:", error);
+        console.error("❌ Camera error:", error.name, error.message);
         state.cameraOn = false;
         cameraToggle.checked = false;
-        cameraCtx.fillStyle = "#1a1a2e";
-        cameraCtx.fillRect(0, 0, cameraCanvas.width, cameraCanvas.height);
-        cameraCtx.fillStyle = "#6366f1";
-        cameraCtx.font = "16px sans-serif";
-        cameraCtx.textAlign = "center";
-        cameraCtx.fillText("Camera access denied", cameraCanvas.width / 2, cameraCanvas.height / 2);
-        updateStatus("❌ Camera access failed: " + error.message);
+
+        // Draw error message on canvas
+        if (cameraCtx) {
+            cameraCtx.fillStyle = "#1a1a2e";
+            cameraCtx.fillRect(0, 0, cameraCanvas.width, cameraCanvas.height);
+            cameraCtx.fillStyle = "#ef4444";
+            cameraCtx.font = "16px sans-serif";
+            cameraCtx.textAlign = "center";
+            cameraCtx.fillText("Camera error: " + error.message, cameraCanvas.width / 2, cameraCanvas.height / 2);
+        }
+
+        const errorMsg = `❌ ${error.name}: ${error.message}`;
+        updateStatus(errorMsg);
+        console.error("Full error:", error);
     }
 }
 
@@ -640,7 +716,22 @@ function renderLoop() {
 // ============================================================
 
 cameraToggle.addEventListener("change", () => {
-    cameraToggle.checked ? startCamera() : stopCamera();
+    console.log("🎬 Camera toggle clicked:", cameraToggle.checked);
+    console.log("🎬 Camera toggle element:", cameraToggle);
+    if (cameraToggle.checked) {
+        console.log("🚀 Starting camera...");
+        startCamera();
+    } else {
+        console.log("⏹️ Stopping camera...");
+        stopCamera();
+    }
+});
+
+// Reset camera permissions button
+document.getElementById("resetCameraBtn")?.addEventListener("click", () => {
+    console.log("🔄 Resetting camera permissions...");
+    updateStatus("🔄 Reset camera permissions and refresh the page");
+    alert("To reset camera permissions:\n\n1. Click the lock/info icon in your browser's address bar\n2. Find camera permissions\n3. Reset or allow camera access\n4. Refresh this page\n\nAlternatively, try opening this page in an incognito/private window.");
 });
 
 mirrorToggle.addEventListener("change", () => {
@@ -808,42 +899,18 @@ initTabs();
 window.addEventListener("beforeunload", stopCamera);
 
 if (!navigator.mediaDevices?.getUserMedia) {
-    updateStatus("Browser unsupported");
+    updateStatus("⚠️ Browser unsupported");
 }
 
-// ============================================================
-// INITIALIZATION & CAMERA FUNCTIONS
-// ============================================================
+console.log("✅ All event listeners attached, app ready!");
 
-function updateStatus(message) {
-    statusText.textContent = message;
-}
-
-async function startCamera() {
-    if (stream) return;
-
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
-            audio: false,
-        });
-        cameraFeed.srcObject = stream;
-        await cameraFeed.play();
-        state.cameraOn = true;
-        cameraToggle.checked = true;
-        updatePreviewMirror();
-        updateStatus("Camera live");
-        renderLoop();
-    } catch (error) {
-        state.cameraOn = false;
-        cameraToggle.checked = false;
-        asciiFrame.textContent = "Camera access was blocked or unavailable.";
-        updateStatus("Camera access failed");
-    }
-}
-
-function stopCamera() {
-    state.cameraOn = false;
+// Debug: Check if camera toggle is working
+setTimeout(() => {
+    console.log("🔍 Debug check - Camera toggle element:", cameraToggle);
+    console.log("🔍 Debug check - Camera toggle checked:", cameraToggle?.checked);
+    console.log("🔍 Debug check - Camera feed element:", cameraFeed);
+    console.log("🔍 Debug check - Camera canvas element:", cameraCanvas);
+}, 1000);
     cameraToggle.checked = false;
 
     if (animationHandle) {
