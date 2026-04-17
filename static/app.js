@@ -254,8 +254,28 @@ function initTabs() {
 
             tabPanes.forEach((pane) => pane.classList.remove("active"));
             document.getElementById(tabName)?.classList.add("active");
+
+            // Update progress
+            updateProgress(tabName);
         });
     });
+}
+
+function updateProgress(currentTab) {
+    const units = ['basics', 'enhancement', 'restoration', 'compression', 'segmentation'];
+    const currentIndex = units.indexOf(currentTab);
+    const progress = ((currentIndex + 1) / units.length) * 100;
+    
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    
+    if (progressFill) {
+        progressFill.style.width = progress + '%';
+    }
+    
+    if (progressText) {
+        progressText.textContent = `Unit ${currentIndex + 1} of ${units.length}: ${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}`;
+    }
 }
 
 // ============================================================
@@ -738,6 +758,24 @@ document.getElementById("resetCameraBtn")?.addEventListener("click", () => {
     alert("To reset camera permissions:\n\n1. Click the lock/info icon in your browser's address bar\n2. Find camera permissions\n3. Reset or allow camera access\n4. Refresh this page\n\nAlternatively, try opening this page in an incognito/private window.");
 });
 
+// Learning mode toggle
+document.getElementById("learningToggle")?.addEventListener("change", (e) => {
+    toggleLearningMode(e.target.checked);
+});
+
+// Help button
+document.getElementById("helpBtn")?.addEventListener("click", () => {
+    showAlgorithmInfo(state.currentTab);
+});
+
+// Modal close
+document.getElementById("closeModal")?.addEventListener("click", hideModal);
+document.getElementById("helpModal")?.addEventListener("click", (e) => {
+    if (e.target.id === "helpModal") {
+        hideModal();
+    }
+});
+
 mirrorToggle.addEventListener("change", () => {
     state.mirror = mirrorToggle.checked;
 });
@@ -895,10 +933,203 @@ document.getElementById("morphIterations")?.addEventListener("input", (e) => {
 });
 
 // ============================================================
+// LEARNING & HELP SYSTEM
+// ============================================================
+
+const algorithmInfo = {
+    basics: {
+        title: "Unit 1: Sampling & Quantization",
+        content: `
+            <h3>Sampling (Resolution Control)</h3>
+            <p>Sampling determines how many pixels are captured from the continuous image signal. Lower sampling rates reduce image detail but improve processing speed.</p>
+            
+            <h4>Key Concepts:</h4>
+            <ul>
+                <li><strong>Resolution</strong>: Number of pixels in the image (width × height)</li>
+                <li><strong>Sampling Rate</strong>: How often we sample the continuous signal</li>
+                <li><strong>Aliasing</strong>: Artifacts from insufficient sampling</li>
+            </ul>
+
+            <h3>Quantization (Gray Levels)</h3>
+            <p>Quantization reduces the number of possible intensity values. Fewer gray levels create a "posterized" effect where smooth gradients become bands.</p>
+            
+            <div class="formula">Levels = 2^n (where n is the number of bits)</div>
+            <p>Example: 4 levels = 2² = 4 possible intensities</p>
+
+            <h3>Pixel Relationships</h3>
+            <p>Understanding pixel connectivity is fundamental to many image processing operations:</p>
+            <ul>
+                <li><strong>4-Neighbors</strong>: North, South, East, West pixels</li>
+                <li><strong>8-Neighbors</strong>: Includes diagonals (Northeast, etc.)</li>
+            </ul>
+        `
+    },
+    enhancement: {
+        title: "Unit 2: Image Enhancement",
+        content: `
+            <h3>Gray Level Transformations</h3>
+            <p>Point operations that modify pixel intensities based on their current values.</p>
+            
+            <h4>Negative Transformation</h4>
+            <div class="formula">s = L - 1 - r</div>
+            <p>Where L is the maximum intensity level. Flips black and white.</p>
+
+            <h4>Logarithmic Transformation</h4>
+            <div class="formula">s = c · log(1 + r)</div>
+            <p>Expands dark pixel values, compresses bright values. Useful for images with wide dynamic range.</p>
+
+            <h3>Gamma Correction</h3>
+            <p>Non-linear transformation for adjusting image brightness and contrast.</p>
+            <div class="formula">s = c · r^γ</div>
+            <ul>
+                <li>γ < 1: Image appears brighter (expands dark regions)</li>
+                <li>γ > 1: Image appears darker (expands bright regions)</li>
+                <li>γ = 1: No change (linear transformation)</li>
+            </ul>
+
+            <h3>Histogram Equalization</h3>
+            <p>Automatic contrast enhancement by redistributing intensity values to create a uniform histogram.</p>
+            <div class="formula">P(r_k) = n_k / n</div>
+            <p>Where n_k is the number of pixels with intensity k, and n is total pixels.</p>
+
+            <h3>Spatial Filtering</h3>
+            <p>Neighborhood operations that modify pixels based on surrounding values.</p>
+            
+            <h4>Linear Filters:</h4>
+            <ul>
+                <li><strong>Mean Filter</strong>: Simple averaging, reduces noise but blurs edges</li>
+                <li><strong>Gaussian Filter</strong>: Weighted averaging, preserves edges better</li>
+            </ul>
+
+            <h4>Edge Detection:</h4>
+            <ul>
+                <li><strong>Sobel Operator</strong>: Gradient-based edge detection</li>
+                <li><strong>Laplacian</strong>: Second derivative, highlights edges and lines</li>
+            </ul>
+        `
+    },
+    restoration: {
+        title: "Unit 3: Image Restoration",
+        content: `
+            <h3>Noise Addition</h3>
+            <p>Understanding different types of noise helps in developing appropriate restoration techniques.</p>
+            
+            <h4>Types of Noise:</h4>
+            <ul>
+                <li><strong>Salt & Pepper</strong>: Random black and white pixels</li>
+                <li><strong>Gaussian</strong>: Normally distributed noise</li>
+                <li><strong>Uniform</strong>: Random values in a range</li>
+            </ul>
+
+            <h3>Motion Blur</h3>
+            <p>Simulates camera motion during exposure. The blur kernel represents the motion path.</p>
+            <div class="formula">h(x,y) = 1/L for |x| ≤ L/2, y = 0</div>
+            <p>Where L is the motion length.</p>
+
+            <h3>Median Filtering</h3>
+            <p>Non-linear filter excellent for removing salt & pepper noise while preserving edges.</p>
+            <p>Replaces each pixel with the median value of its neighborhood, rather than the mean.</p>
+        `
+    },
+    compression: {
+        title: "Unit 4: Image Compression",
+        content: `
+            <h3>Run-Length Encoding (RLE)</h3>
+            <p>Lossless compression technique that replaces sequences of identical values with a count.</p>
+            <p>Example: AAAAAAABBB → (7,A)(3,B)</p>
+
+            <h3>Discrete Cosine Transform (DCT)</h3>
+            <p>Foundation of JPEG compression. Transforms image from spatial domain to frequency domain.</p>
+            <div class="formula">F(u,v) = Σ Σ f(x,y) · cos(πu(2x+1)/2N) · cos(πv(2y+1)/2N)</div>
+            
+            <h4>DCT Properties:</h4>
+            <ul>
+                <li>Energy compaction: Most image energy concentrates in few coefficients</li>
+                <li>Separable: Can be computed as 1D transforms</li>
+                <li>Orthogonal: Preserves energy during transformation</li>
+            </ul>
+
+            <h3>Lossy vs Lossless</h3>
+            <ul>
+                <li><strong>Lossless</strong>: Perfect reconstruction (RLE, PNG)</li>
+                <li><strong>Lossy</strong>: Irreversible compression (JPEG, WebP)</li>
+                <li><strong>Trade-off</strong>: Quality vs. file size</li>
+            </ul>
+        `
+    },
+    segmentation: {
+        title: "Unit 5: Image Segmentation",
+        content: `
+            <h3>Thresholding</h3>
+            <p>Converts grayscale images to binary images by selecting a threshold value.</p>
+            
+            <h4>Manual Thresholding</h4>
+            <div class="formula">g(x,y) = { 255 if f(x,y) ≥ T, 0 otherwise }</div>
+            <p>Where T is the manually selected threshold.</p>
+
+            <h4>Otsu Method</h4>
+            <p>Automatic threshold selection by maximizing between-class variance.</p>
+            <div class="formula">σ²_b = w1·w2·(μ1 - μ2)²</div>
+            <p>Where w1, w2 are class probabilities and μ1, μ2 are class means.</p>
+
+            <h3>Edge Detection</h3>
+            <p>Identifies boundaries between regions based on intensity discontinuities.</p>
+            
+            <h4>Gradient Operators:</h4>
+            <ul>
+                <li><strong>Sobel</strong>: Uses 3×3 kernels for gradient computation</li>
+                <li><strong>Prewitt</strong>: Similar to Sobel but different kernel weights</li>
+            </ul>
+
+            <h4>Second Derivative:</h4>
+            <ul>
+                <li><strong>Laplacian</strong>: Detects edges and isolated points</li>
+            </ul>
+
+            <h3>Morphological Operations</h3>
+            <p>Shape-based operations using structuring elements.</p>
+            
+            <h4>Basic Operations:</h4>
+            <ul>
+                <li><strong>Erosion</strong>: Shrinks bright regions</li>
+                <li><strong>Dilation</strong>: Expands bright regions</li>
+                <li><strong>Opening</strong>: Erosion followed by dilation (removes noise)</li>
+                <li><strong>Closing</strong>: Dilation followed by erosion (fills gaps)</li>
+            </ul>
+        `
+    }
+};
+
+// Modal functionality
+function showAlgorithmInfo(unit) {
+    const modal = document.getElementById('helpModal');
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+    
+    if (algorithmInfo[unit]) {
+        title.textContent = algorithmInfo[unit].title;
+        body.innerHTML = algorithmInfo[unit].content;
+        modal.style.display = 'flex';
+    }
+}
+
+function hideModal() {
+    document.getElementById('helpModal').style.display = 'none';
+}
+
+// Learning mode toggle
+let learningMode = true;
+function toggleLearningMode(enabled) {
+    learningMode = enabled;
+    // Could add visual indicators for learning mode here
+}
+
+// ============================================================
 // INITIALIZATION
 // ============================================================
 
 initTabs();
+updateProgress('basics'); // Initialize with first unit
 
 window.addEventListener("beforeunload", stopCamera);
 

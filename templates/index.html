@@ -77,11 +77,22 @@
                 </div>
 
                 <div class="control-group">
-                    <label class="slider-row" for="brightnessRange">
-                        <span>Brightness</span>
-                        <span id="brightnessValue">0</span>
-                    </label>
-                    <input id="brightnessRange" type="range" min="-50" max="50" step="2" value="0">
+                    <span class="group-label">Performance Metrics</span>
+                    <div class="metrics-display">
+                        <div class="metric-item">
+                            <span class="metric-label">Processing:</span>
+                            <span class="metric-value" id="processingTime">-- ms</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Resolution:</span>
+                            <span class="metric-value" id="resolutionDisplay">640×480</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">FPS:</span>
+                            <span class="metric-value" id="fpsDisplay">--</span>
+                        </div>
+                    </div>
+                    <p class="help-text">Real-time performance monitoring</p>
                 </div>
             </section>
 
@@ -137,11 +148,11 @@
                                 <div class="control-group">
                                     <span class="group-label">Quantization Levels</span>
                                     <div class="button-group">
-                                        <button class="preset-button active" data-quantize="4" type="button">4-Level</button>
-                                        <button class="preset-button" data-quantize="8" type="button">8-Level</button>
-                                        <button class="preset-button" data-quantize="16" type="button">16-Level</button>
+                                        <button class="preset-button active" data-quantize="4" type="button" title="4 gray levels (2²)">4-Level</button>
+                                        <button class="preset-button" data-quantize="8" type="button" title="8 gray levels (2³)">8-Level</button>
+                                        <button class="preset-button" data-quantize="16" type="button" title="16 gray levels (2⁴)">16-Level</button>
                                     </div>
-                                    <p class="help-text">Lower = fewer gray levels, higher = more detail</p>
+                                    <p class="help-text">Fewer levels = more posterization effect</p>
                                 </div>
 
                                 <div class="control-group">
@@ -166,9 +177,9 @@
                                 <div class="control-group">
                                     <span class="group-label">Gray Level Transformations</span>
                                     <div class="button-group">
-                                        <button class="mode-button" data-transform="negative" type="button">Negative</button>
-                                        <button class="mode-button" data-transform="log" type="button">Log Transform</button>
-                                        <button class="mode-button" data-transform="normal" type="button">Normal</button>
+                                        <button class="mode-button" data-transform="negative" type="button" title="s = L-1 - r (flips black/white)">Negative</button>
+                                        <button class="mode-button" data-transform="log" type="button" title="s = c·log(1+r) (expands dark regions)">Log Transform</button>
+                                        <button class="mode-button active" data-transform="normal" type="button" title="s = r (no transformation)">Normal</button>
                                     </div>
                                 </div>
 
@@ -177,8 +188,8 @@
                                         <span>Gamma Correction (γ)</span>
                                         <span id="gammaValue">1.0</span>
                                     </label>
-                                    <input id="gammaSlider" type="range" min="0.2" max="3.0" step="0.1" value="1.0">
-                                    <p class="help-text">s = c·r^γ (lightens if γ < 1, darkens if γ > 1)</p>
+                                    <input id="gammaSlider" type="range" min="0.2" max="3.0" step="0.1" value="1.0" title="s = c·r^γ (γ<1 brightens, γ>1 darkens)">
+                                    <p class="help-text">γ < 1: Brightens image | γ > 1: Darkens image</p>
                                 </div>
 
                                 <div class="control-group">
@@ -198,10 +209,10 @@
                                 <div class="control-group">
                                     <span class="group-label">Spatial Filtering</span>
                                     <div class="button-group">
-                                        <button class="filter-button" data-filter="mean" type="button">Mean</button>
-                                        <button class="filter-button" data-filter="gaussian" type="button">Gaussian</button>
-                                        <button class="filter-button" data-filter="laplacian" type="button">Laplacian</button>
-                                        <button class="filter-button" data-filter="sobel" type="button">Sobel</button>
+                                        <button class="filter-button" data-filter="mean" type="button" title="Simple averaging filter (blurs but reduces noise)">Mean</button>
+                                        <button class="filter-button" data-filter="gaussian" type="button" title="Weighted averaging (preserves edges better)">Gaussian</button>
+                                        <button class="filter-button" data-filter="laplacian" type="button" title="Second derivative (highlights edges)">Laplacian</button>
+                                        <button class="filter-button" data-filter="sobel" type="button" title="Gradient-based edge detection">Sobel</button>
                                     </div>
                                 </div>
 
@@ -389,6 +400,19 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- Help/Info Modal -->
+    <div id="helpModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Algorithm Information</h2>
+                <button id="closeModal" class="close-btn">&times;</button>
+            </div>
+            <div id="modalBody" class="modal-body">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='app.js') }}"></script>
