@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Cam</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="hero">
+            <div>
+                <p class="eyebrow">Live Webcam ASCII</p>
+                <h1>ASCII Cam Web App</h1>
+                <p class="hero-copy">
+                    Turn your camera feed into animated ASCII with a bright green interface and quick effect toggles.
+                </p>
+            </div>
+            <div class="hero-status">
+                <span class="status-dot"></span>
+                <span id="statusText">Waiting for camera access</span>
+            </div>
+        </header>
+
+        <main class="layout">
+            <section class="panel controls-panel">
+                <div class="panel-heading">
+                    <h2>Controls</h2>
+                    <p>Flip modes and tune the look in real time.</p>
+                </div>
+
+                <div class="control-group">
+                    <span class="group-label">Camera</span>
+                    <div class="switch-row">
+                        <span>Camera power</span>
+                        <label class="switch">
+                            <input id="cameraToggle" type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <span class="group-label">Modes</span>
+                    <div class="mode-grid" id="modeGrid">
+                        <button class="mode-button active" data-mode="normal" type="button">Normal</button>
+                        <button class="mode-button" data-mode="inverted" type="button">Inverted</button>
+                        <button class="mode-button" data-mode="edges" type="button">Edges</button>
+                        <button class="mode-button" data-mode="sketch" type="button">Sketch</button>
+                        <button class="mode-button" data-mode="matrix" type="button">Matrix</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <span class="group-label">Switches</span>
+                    <div class="switch-row">
+                        <span>Mirror view</span>
+                        <label class="switch">
+                            <input id="mirrorToggle" type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-row">
+                        <span>Dense characters</span>
+                        <label class="switch">
+                            <input id="denseToggle" type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-row">
+                        <span>Glow effect</span>
+                        <label class="switch">
+                            <input id="glowToggle" type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="slider-row" for="detailRange">
+                        <span>Detail</span>
+                        <span id="detailValue">120</span>
+                    </label>
+                    <input id="detailRange" type="range" min="72" max="180" step="4" value="120">
+                </div>
+
+                <div class="control-group">
+                    <label class="slider-row" for="contrastRange">
+                        <span>Contrast</span>
+                        <span id="contrastValue">1.35</span>
+                    </label>
+                    <input id="contrastRange" type="range" min="0.6" max="2.4" step="0.05" value="1.35">
+                </div>
+            </section>
+
+            <section class="panel viewer-panel">
+                <div class="panel-heading">
+                    <h2>Output</h2>
+                    <p>Browser camera feed rendered as glowing text.</p>
+                </div>
+
+                <div class="viewer-stack">
+                    <pre id="asciiFrame" class="ascii-screen glow-on">Enable camera to begin.</pre>
+                    <video id="cameraFeed" class="camera-preview" autoplay playsinline muted></video>
+                    <canvas id="processingCanvas" hidden></canvas>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
