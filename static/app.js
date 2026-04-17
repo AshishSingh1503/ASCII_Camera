@@ -623,84 +623,88 @@ function renderFrame() {
         const cameraImageData = grayscaleToImageData(grayscale, renderWidth, renderHeight);
         cameraCtx.putImageData(cameraImageData, 0, 0);
 
-    // UNIT 1: Apply Sampling based on detail level
-    // First, downsample to processing resolution
-    let workingGrayscale = new Uint8ClampedArray(processingWidth * processingHeight);
-    for (let y = 0; y < processingHeight; y++) {
-        for (let x = 0; x < processingWidth; x++) {
-            const srcX = Math.floor((x / processingWidth) * renderWidth);
-            const srcY = Math.floor((y / processingHeight) * renderHeight);
-            workingGrayscale[y * processingWidth + x] = grayscale[srcY * renderWidth + srcX];
+        // UNIT 1: Apply Sampling based on detail level
+        // First, downsample to processing resolution
+        let workingGrayscale = new Uint8ClampedArray(processingWidth * processingHeight);
+        for (let y = 0; y < processingHeight; y++) {
+            for (let x = 0; x < processingWidth; x++) {
+                const srcX = Math.floor((x / processingWidth) * renderWidth);
+                const srcY = Math.floor((y / processingHeight) * renderHeight);
+                workingGrayscale[y * processingWidth + x] = grayscale[srcY * renderWidth + srcX];
+            }
         }
+        
+        // Apply sampling scale if set
+        const sampledResult = applySampling(workingGrayscale, processingWidth, processingHeight);
+        workingGrayscale = sampledResult.data;
+        let width = sampledResult.width;
+        let height = sampledResult.height;
+        
+        // Now work with the processed data at reduced resolution
+        grayscale = workingGrayscale;
+
+        // Apply Quantization
+        grayscale = quantizeImage(grayscale, state.quantizeLevels);
+
+        // UNIT 2: Apply Transformations
+        grayscale = applyGrayLevelTransform(grayscale, state.currentTransform);
+        grayscale = applyGammaCorrection(grayscale, state.gamma);
+
+        // Apply Histogram Equalization
+        if (state.useHistogramEqualization) {
+            grayscale = applyHistogramEqualization(grayscale);
+        }
+
+        // Apply Filtering
+        if (state.currentFilterType === "median") {
+            grayscale = applyMedianFilter(grayscale, width, height, state.filterStrength);
+        } else if (state.currentFilterType === "sobel") {
+            grayscale = applySobelFilter(grayscale, width, height);
+        } else if (state.currentFilterType === "laplacian") {
+            grayscale = applyLaplacianFilter(grayscale, width, height);
+        } else if (state.currentFilterType === "prewitt") {
+            grayscale = applyPrewittFilter(grayscale, width, height);
+        }
+
+        // UNIT 3: Apply Restoration
+        grayscale = addNoise(grayscale, state.noiseType, state.noiseIntensity);
+        grayscale = applyMotionBlur(grayscale, width, height, state.motionBlurAmount);
+
+        if (state.restorationFilter === "median") {
+            grayscale = applyMedianFilter(grayscale, width, height, 1);
+        }
+
+        // UNIT 5: Apply Segmentation
+        if (state.thresholdMethod === "manual") {
+            grayscale = applyThresholding(grayscale, state.thresholdValue);
+        } else if (state.thresholdMethod === "otsu") {
+            const threshold = otsuThresholding(grayscale);
+            grayscale = applyThresholding(grayscale, threshold);
+        }
+
+        if (state.edgeDetectionMethod === "sobel") {
+            grayscale = applySobelFilter(grayscale, width, height);
+        } else if (state.edgeDetectionMethod === "prewitt") {
+            grayscale = applyPrewittFilter(grayscale, width, height);
+        } else if (state.edgeDetectionMethod === "laplacian") {
+            grayscale = applyLaplacianFilter(grayscale, width, height);
+        }
+
+        // Apply brightness/contrast
+        for (let i = 0; i < grayscale.length; i++) {
+            grayscale[i] = mapValue(grayscale[i]);
+        }
+
+        // Resize back to full dimensions for display
+        const fullOutputData = resampleGrayscale(grayscale, width, height, renderWidth, renderHeight);
+        
+        // Display processed image at full resolution
+        const processedImageData = grayscaleToImageData(fullOutputData, renderWidth, renderHeight);
+        outputCtx.putImageData(processedImageData, 0, 0);
+    } catch (renderError) {
+        console.error("⚠️ renderFrame error:", renderError);
+        updateStatus("⚠️ Rendering error: " + renderError.message);
     }
-    
-    // Apply sampling scale if set
-    const sampledResult = applySampling(workingGrayscale, processingWidth, processingHeight);
-    workingGrayscale = sampledResult.data;
-    let width = sampledResult.width;
-    let height = sampledResult.height;
-    
-    // Now work with the processed data at reduced resolution
-    grayscale = workingGrayscale;
-
-    // Apply Quantization
-    grayscale = quantizeImage(grayscale, state.quantizeLevels);
-
-    // UNIT 2: Apply Transformations
-    grayscale = applyGrayLevelTransform(grayscale, state.currentTransform);
-    grayscale = applyGammaCorrection(grayscale, state.gamma);
-
-    // Apply Histogram Equalization
-    if (state.useHistogramEqualization) {
-        grayscale = applyHistogramEqualization(grayscale);
-    }
-
-    // Apply Filtering
-    if (state.currentFilterType === "median") {
-        grayscale = applyMedianFilter(grayscale, width, height, state.filterStrength);
-    } else if (state.currentFilterType === "sobel") {
-        grayscale = applySobelFilter(grayscale, width, height);
-    } else if (state.currentFilterType === "laplacian") {
-        grayscale = applyLaplacianFilter(grayscale, width, height);
-    } else if (state.currentFilterType === "prewitt") {
-        grayscale = applyPrewittFilter(grayscale, width, height);
-    }
-
-    // UNIT 3: Apply Restoration
-    grayscale = addNoise(grayscale, state.noiseType, state.noiseIntensity);
-    grayscale = applyMotionBlur(grayscale, width, height, state.motionBlurAmount);
-
-    if (state.restorationFilter === "median") {
-        grayscale = applyMedianFilter(grayscale, width, height, 1);
-    }
-
-    // UNIT 5: Apply Segmentation
-    if (state.thresholdMethod === "manual") {
-        grayscale = applyThresholding(grayscale, state.thresholdValue);
-    } else if (state.thresholdMethod === "otsu") {
-        const threshold = otsuThresholding(grayscale);
-        grayscale = applyThresholding(grayscale, threshold);
-    }
-
-    if (state.edgeDetectionMethod === "sobel") {
-        grayscale = applySobelFilter(grayscale, width, height);
-    } else if (state.edgeDetectionMethod === "prewitt") {
-        grayscale = applyPrewittFilter(grayscale, width, height);
-    } else if (state.edgeDetectionMethod === "laplacian") {
-        grayscale = applyLaplacianFilter(grayscale, width, height);
-    }
-
-    // Apply brightness/contrast
-    for (let i = 0; i < grayscale.length; i++) {
-        grayscale[i] = mapValue(grayscale[i]);
-    }
-
-    // Resize back to full dimensions for display
-    const fullOutputData = resampleGrayscale(grayscale, width, height, renderWidth, renderHeight);
-    
-    // Display processed image at full resolution
-    const processedImageData = grayscaleToImageData(fullOutputData, renderWidth, renderHeight);
-    outputCtx.putImageData(processedImageData, 0, 0);
 
     animationHandle = requestAnimationFrame(renderFrame);
 }
