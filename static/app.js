@@ -4,6 +4,8 @@ const state = {
     cameraOn: false,
     mirror: true,
     glow: true,
+    outputWidth: 640,
+    outputHeight: 480,
     detail: 120,
     contrast: 1.35,
     brightness: 0,
@@ -58,9 +60,11 @@ const glowToggle = document.getElementById("glowToggle");
 const detailRange = document.getElementById("detailRange");
 const contrastRange = document.getElementById("contrastRange");
 const brightnessRange = document.getElementById("brightnessRange");
+const outputResolution = document.getElementById("outputResolution");
 const detailValue = document.getElementById("detailValue");
 const contrastValue = document.getElementById("contrastValue");
 const brightnessValue = document.getElementById("brightnessValue");
+const outputResolutionValue = document.getElementById("outputResolutionValue");
 const statusText = document.getElementById("statusText");
 
 // Verify DOM elements exist
@@ -100,6 +104,19 @@ function resizeCanvases(width, height) {
     outputCanvas.height = height;
     processingCanvas.width = width;
     processingCanvas.height = height;
+}
+
+function updateResolutionDisplay(width = state.outputWidth, height = state.outputHeight) {
+    const resolutionLabel = `${width}×${height}`;
+    const resolutionDisplay = document.getElementById("resolutionDisplay");
+
+    if (resolutionDisplay) {
+        resolutionDisplay.textContent = resolutionLabel;
+    }
+
+    if (outputResolutionValue) {
+        outputResolutionValue.textContent = resolutionLabel;
+    }
 }
 
 // ============================================================
@@ -657,10 +674,11 @@ function renderFrame() {
         return;
     }
 
-    // Use full camera resolution for rendering
-    const renderWidth = 640;
-    const renderHeight = 480;
+    // Use the selected output resolution for rendering
+    const renderWidth = state.outputWidth;
+    const renderHeight = state.outputHeight;
     resizeCanvases(renderWidth, renderHeight);
+    updateResolutionDisplay(renderWidth, renderHeight);
 
     // Detail level controls processing resolution (60-200)
     // Convert detail to a sampling scale (0.1 to 0.33)
@@ -844,6 +862,13 @@ brightnessRange?.addEventListener("input", () => {
     if (brightnessValue) {
         brightnessValue.textContent = brightnessRange.value;
     }
+});
+
+outputResolution?.addEventListener("change", () => {
+    const [width, height] = outputResolution.value.split("x").map(Number);
+    state.outputWidth = width;
+    state.outputHeight = height;
+    updateResolutionDisplay();
 });
 
 // UNIT 1: BASICS TAB
@@ -1179,6 +1204,7 @@ initTabs();
 updateProgress('basics'); // Initialize with first unit
 updateVisualEffects();
 updatePreviewMirror();
+updateResolutionDisplay();
 
 window.addEventListener("beforeunload", stopCamera);
 

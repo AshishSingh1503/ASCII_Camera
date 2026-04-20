@@ -109,6 +109,20 @@
                 </div>
 
                 <div class="control-group">
+                    <label class="slider-row" for="outputResolution">
+                        <span>Output Resolution</span>
+                        <span id="outputResolutionValue">640×480</span>
+                    </label>
+                    <select id="outputResolution">
+                        <option value="320x240">320×240</option>
+                        <option value="640x480" selected>640×480</option>
+                        <option value="800x600">800×600</option>
+                        <option value="1280x720">1280×720</option>
+                    </select>
+                    <p class="help-text">Sets the rendered size of the camera and processed output canvases</p>
+                </div>
+
+                <div class="control-group">
                     <span class="group-label">Performance Metrics</span>
                     <div class="metrics-display">
                         <div class="metric-item">
